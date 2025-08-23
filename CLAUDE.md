@@ -104,3 +104,4 @@ src/
 - `notifications` - Price alerts
 - `alarms` - Periodic price checking
 - `host_permissions` - Limited to `https://item.rakuten.co.jp/*`
+- Use `npx sv add --help` to check if the Add-On available before adding new library with npm install
