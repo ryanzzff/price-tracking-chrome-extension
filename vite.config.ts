@@ -14,14 +14,6 @@ export default defineConfig({
 		})
 	],
 	build: {
-		rollupOptions: {
-			input: {
-				popup: './src/popup/index.html',
-				options: './src/options/index.html',
-				background: './src/background/service-worker.ts',
-				content: './src/content/content-script.ts'
-			}
-		},
 		minify: 'esbuild',
 		target: 'chrome88',
 		outDir: 'dist',

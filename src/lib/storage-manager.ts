@@ -159,6 +159,31 @@ export class ProductStorageManager {
     this.cache.delete(productId);
   }
 
+  async hasTodaysPrice(productId: string): Promise<boolean> {
+    const history = await this.getPriceHistory(productId);
+    if (history.length === 0) return false;
+    
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const todayEnd = todayStart + (24 * 60 * 60 * 1000) - 1;
+    
+    return history.some(point => 
+      point.timestamp >= todayStart && point.timestamp <= todayEnd
+    );
+  }
+
+  async addPricePointIfNew(productId: string, price: number): Promise<boolean> {
+    // Check if we already have today's price
+    const hasToday = await this.hasTodaysPrice(productId);
+    if (hasToday) {
+      return false; // Price already recorded today
+    }
+    
+    // Add the new price point
+    await this.addPricePoint(productId, price);
+    return true; // Price was added
+  }
+
   async addPricePoint(productId: string, price: number): Promise<void> {
     const history = await this.getPriceHistory(productId);
     

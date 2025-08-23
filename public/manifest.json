@@ -13,14 +13,13 @@
     "default_title": "Rakuten Price Tracker"
   },
   "background": {
-    "service_worker": "background/service-worker.js",
+    "service_worker": "src/background/service-worker.ts",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://item.rakuten.co.jp/*"],
-      "js": ["content/content-script.js"],
-      "css": ["content/styles.css"],
+      "js": ["src/content/content-script.ts"],
       "run_at": "document_idle"
     }
   ],

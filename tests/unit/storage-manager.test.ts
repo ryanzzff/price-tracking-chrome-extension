@@ -168,6 +168,102 @@ describe('ProductStorageManager', () => {
     });
   });
 
+  describe('daily price checking', () => {
+    beforeEach(() => {
+      // Mock current date to be consistent
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2024-03-15 14:30:00'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    describe('hasTodaysPrice', () => {
+      it('should return false when no history exists', async () => {
+        chrome.storage.local.get.mockResolvedValue({});
+        
+        const result = await storageManager.hasTodaysPrice('test123');
+        expect(result).toBe(false);
+      });
+
+      it('should return true when today\'s price exists', async () => {
+        const todayTimestamp = new Date('2024-03-15 10:00:00').getTime();
+        const history = {
+          'test123': [
+            { price: 1000, timestamp: todayTimestamp }
+          ]
+        };
+        chrome.storage.local.get.mockResolvedValue({ priceHistory: history });
+        
+        const result = await storageManager.hasTodaysPrice('test123');
+        expect(result).toBe(true);
+      });
+
+      it('should return false when only yesterday\'s price exists', async () => {
+        const yesterdayTimestamp = new Date('2024-03-14 10:00:00').getTime();
+        const history = {
+          'test123': [
+            { price: 1000, timestamp: yesterdayTimestamp }
+          ]
+        };
+        chrome.storage.local.get.mockResolvedValue({ priceHistory: history });
+        
+        const result = await storageManager.hasTodaysPrice('test123');
+        expect(result).toBe(false);
+      });
+
+      it('should return true for price at start of day', async () => {
+        const startOfDay = new Date('2024-03-15 00:00:00').getTime();
+        const history = {
+          'test123': [
+            { price: 1000, timestamp: startOfDay }
+          ]
+        };
+        chrome.storage.local.get.mockResolvedValue({ priceHistory: history });
+        
+        const result = await storageManager.hasTodaysPrice('test123');
+        expect(result).toBe(true);
+      });
+
+      it('should return true for price at end of day', async () => {
+        const endOfDay = new Date('2024-03-15 23:59:59').getTime();
+        const history = {
+          'test123': [
+            { price: 1000, timestamp: endOfDay }
+          ]
+        };
+        chrome.storage.local.get.mockResolvedValue({ priceHistory: history });
+        
+        const result = await storageManager.hasTodaysPrice('test123');
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('addPricePointIfNew', () => {
+      it('should add price when no today\'s price exists', async () => {
+        chrome.storage.local.get.mockResolvedValue({ priceHistory: {} });
+        vi.spyOn(storageManager, 'hasTodaysPrice').mockResolvedValue(false);
+        vi.spyOn(storageManager, 'addPricePoint').mockResolvedValue();
+        
+        const result = await storageManager.addPricePointIfNew('test123', 1500);
+        
+        expect(result).toBe(true);
+        expect(storageManager.addPricePoint).toHaveBeenCalledWith('test123', 1500);
+      });
+
+      it('should not add price when today\'s price already exists', async () => {
+        vi.spyOn(storageManager, 'hasTodaysPrice').mockResolvedValue(true);
+        vi.spyOn(storageManager, 'addPricePoint').mockResolvedValue();
+        
+        const result = await storageManager.addPricePointIfNew('test123', 1500);
+        
+        expect(result).toBe(false);
+        expect(storageManager.addPricePoint).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('data import/export', () => {
     it('should export data with correct format', async () => {
       const mockProducts = { 'test123': { id: 'test123', title: 'Test' } };
