@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Rakuten Price Tracker",
+  "version": "1.0.0",
+  "description": "Track product prices on item.rakuten.co.jp with beautiful charts",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png", 
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_title": "Rakuten Price Tracker"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://item.rakuten.co.jp/*"],
+      "js": ["content/content-script.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation", 
+    "notifications",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://item.rakuten.co.jp/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png", "content/injected.js"],
+      "matches": ["https://item.rakuten.co.jp/*"]
+    }
+  ],
+  "options_page": "options/index.html"
+}
