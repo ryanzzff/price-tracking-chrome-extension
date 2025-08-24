@@ -31,20 +31,31 @@ export class BackgroundService {
 
   private initializeService(): void {
     // Set up event listeners - simplified for passive tracking only
-    chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      this.handleMessage(message, sender, sendResponse);
+      return true; // Keep message channel open for async response
+    });
     chrome.webNavigation.onCompleted.addListener(this.handleNavigation.bind(this));
   }
 
-  async handleMessage(message: MessageRequest, sender: any, sendResponse: (response: any) => void): Promise<boolean> {
+  async handleMessage(message: MessageRequest, sender: any, sendResponse: (response: any) => void): Promise<void> {
+    console.log('Background service received message:', message.action, message);
+    
     try {
       switch (message.action) {
         case 'TRACK_PRODUCT':
+          console.log('Tracking product:', message.data);
           const result = await this.storage.addProduct(message.data);
+          console.log('Track product result:', result);
+          console.log('Sending response:', { success: true, data: result });
           sendResponse({ success: true, data: result });
           break;
           
         case 'GET_PRODUCTS':
+          console.log('Getting all products');
           const products = await this.storage.getAllProducts();
+          console.log('Found products:', Object.keys(products).length);
+          console.log('Sending response:', { success: true, data: products });
           sendResponse({ success: true, data: products });
           break;
           
@@ -84,14 +95,15 @@ export class BackgroundService {
           break;
           
         default:
+          console.log('Unknown action, sending error response');
           sendResponse({ success: false, error: 'Unknown action' });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Background service error:', errorMessage, error);
+      console.log('Sending error response:', { success: false, error: errorMessage });
       sendResponse({ success: false, error: errorMessage });
     }
-    
-    return true; // Keep message channel open for async response
   }
 
   async handleNavigation(details: NavigationDetails): Promise<void> {

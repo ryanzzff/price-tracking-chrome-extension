@@ -11,15 +11,20 @@
   // Load tracked products on mount
   onMount(async () => {
     try {
+      console.log('Popup: Sending GET_PRODUCTS message');
       const response = await chrome.runtime.sendMessage({ action: 'GET_PRODUCTS' });
-      if (response.success) {
-        products = response.data;
+      console.log('Popup: Received response:', response);
+      
+      if (response && response.success) {
+        products = response.data || {};
+        console.log('Popup: Products loaded:', Object.keys(products).length);
       } else {
-        error = response.error || 'Failed to load products';
+        error = (response && response.error) || 'Failed to load products';
+        console.error('Popup: Error from background:', error);
       }
     } catch (err) {
       error = 'Failed to communicate with extension';
-      console.error('Failed to load products:', err);
+      console.error('Popup: Failed to load products:', err);
     } finally {
       loading = false;
     }

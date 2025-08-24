@@ -9,7 +9,10 @@
       "Bash(npm run build:*)",
       "Bash(npm test)",
       "Bash(convert:*)",
-      "Bash(magick:*)"
+      "Bash(magick:*)",
+      "WebFetch(domain:item.rakuten.co.jp)",
+      "Bash(npm run dev:*)",
+      "mcp__playwright__browser_snapshot"
     ],
     "deny": [],
     "ask": []

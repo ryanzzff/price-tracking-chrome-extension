@@ -12,24 +12,45 @@ export class RakutenProductExtractor {
   constructor() {}
 
   async init(): Promise<void> {
+    console.log('🔧 RakutenProductExtractor: Initializing...');
+    
     // Check if tracking is enabled
     const settings = await chrome.storage.sync.get('trackingEnabled');
     this.trackingEnabled = settings.trackingEnabled !== false;
+    console.log('⚙️ Tracking enabled:', this.trackingEnabled);
     
-    if (this.isProductPage() && this.trackingEnabled) {
+    const isProduct = this.isProductPage();
+    console.log('📝 Is product page:', isProduct);
+    
+    if (isProduct && this.trackingEnabled) {
+      console.log('✅ Product page detected, proceeding with extraction');
       this.extractProductData();
       this.injectTrackingUI();
       
       // Passively check and store today's price if needed
       await this.checkAndStoreTodaysPrice();
+    } else {
+      console.log('❌ Not a product page or tracking disabled');
+      console.log('   - Is product page:', isProduct);
+      console.log('   - Tracking enabled:', this.trackingEnabled);
     }
   }
 
   isProductPage(): boolean {
     // Rakuten product URL pattern: /shop-id/item-code/
     const urlPattern = /item\.rakuten\.co\.jp\/[^\/]+\/[^\/]+\//;
-    return urlPattern.test(window.location.href) &&
-           !!document.querySelector('.item_name, h1.item-name, .product-title, h1.item_name, h1[itemprop="name"]');
+    const urlMatches = urlPattern.test(window.location.href);
+    
+    const selectors = ['.item_name', 'h1.item-name', '.product-title', 'h1.item_name', 'h1[itemprop="name"]'];
+    const element = document.querySelector(selectors.join(', '));
+    
+    console.log('🔍 URL pattern match:', urlMatches, 'for URL:', window.location.href);
+    console.log('🎯 Product element found:', !!element);
+    if (element) {
+      console.log('📋 Product element text:', element.textContent?.substring(0, 100));
+    }
+    
+    return urlMatches && !!element;
   }
 
   getProductTitle(): string | null {
@@ -50,24 +71,33 @@ export class RakutenProductExtractor {
 
   getProductPrice(): number | null {
     const priceSelectors = [
+      '.price2',  // Most common on modern Rakuten pages
+      '.price1',
       '.price',
       '.item_price',
       '.price-value',
       '.itemPrice',
-      'span[itemprop="price"]'
+      'span[itemprop="price"]',
+      '[data-testid="price"]'
     ];
 
     for (const selector of priceSelectors) {
       const element = document.querySelector(selector);
       if (element) {
         const text = element.textContent || '';
+        console.log(`Found price element with selector ${selector}: "${text}"`);
+        
         // Extract price from Japanese format (¥1,234 or 1,234円)
         const matches = text.match(/[\d,]+/);
         if (matches) {
-          return parseInt(matches[0].replace(/,/g, ''));
+          const price = parseInt(matches[0].replace(/,/g, ''));
+          console.log(`Extracted price: ${price}`);
+          return price;
         }
       }
     }
+    
+    console.warn('No price found with available selectors');
     return null;
   }
 
@@ -107,17 +137,27 @@ export class RakutenProductExtractor {
   }
 
   extractProductData(): ExtractedProductData {
+    console.log('Extracting product data from URL:', window.location.href);
+    
+    const title = this.getProductTitle();
+    const price = this.getProductPrice();
+    const shopId = this.extractShopId();
+    const itemCode = this.extractItemCode();
+    
+    console.log('Extracted data:', { title, price, shopId, itemCode });
+    
     const productInfo: ExtractedProductData = {
       url: window.location.href,
-      shopId: this.extractShopId() || '',
-      itemCode: this.extractItemCode() || '',
-      title: this.getProductTitle() || '',
-      price: this.getProductPrice() || 0,
+      shopId: shopId || '',
+      itemCode: itemCode || '',
+      title: title || '',
+      price: price || 0,
       availability: this.getAvailability(),
       timestamp: Date.now()
     };
 
     this.productData = productInfo;
+    console.log('Final product data:', productInfo);
     return productInfo;
   }
 
