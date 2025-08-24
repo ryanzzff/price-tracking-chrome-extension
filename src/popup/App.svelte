@@ -1,6 +1,18 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Product } from '../lib/storage-manager.js';
+  import { 
+    getMessage, 
+    getMessageWithCount, 
+    initializeI18n, 
+    currentLanguage, 
+    changeLanguage,
+    formatPrice,
+    formatDate,
+    getAvailabilityMessage,
+    type SupportedLanguage,
+    SUPPORTED_LANGUAGES
+  } from '../lib/i18n.js';
   
   // Component states
   let products: Record<string, Product> = {};
@@ -10,6 +22,9 @@
 
   // Load tracked products on mount
   onMount(async () => {
+    // Initialize i18n first
+    await initializeI18n();
+    
     try {
       console.log('Popup: Sending GET_PRODUCTS message');
       const response = await chrome.runtime.sendMessage({ action: 'GET_PRODUCTS' });
@@ -19,11 +34,11 @@
         products = response.data || {};
         console.log('Popup: Products loaded:', Object.keys(products).length);
       } else {
-        error = (response && response.error) || 'Failed to load products';
+        error = (response && response.error) || getMessage('errorOccurred');
         console.error('Popup: Error from background:', error);
       }
     } catch (err) {
-      error = 'Failed to communicate with extension';
+      error = chrome.i18n.getMessage('errorOccurred');
       console.error('Popup: Failed to load products:', err);
     } finally {
       loading = false;
@@ -34,24 +49,8 @@
   $: productList = Object.values(products);
   $: trackedCount = productList.length;
 
-  // Format price in Japanese yen
-  function formatPrice(price: number): string {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY'
-    }).format(price);
-  }
-
-  // Format date in Japanese locale
-  function formatDate(timestamp: number): string {
-    return new Intl.DateTimeFormat('ja-JP', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(timestamp));
-  }
+  // These functions are now imported from i18n.js
+  // formatPrice and formatDate are available from the import
 
   // Delete a product
   async function deleteProduct(productId: string): Promise<void> {
@@ -65,10 +64,10 @@
         delete products[productId];
         products = { ...products }; // Trigger reactivity
       } else {
-        error = response.error || 'Failed to delete product';
+        error = response.error || chrome.i18n.getMessage('errorOccurred');
       }
     } catch (err) {
-      error = 'Failed to delete product';
+      error = chrome.i18n.getMessage('errorOccurred');
       console.error('Failed to delete product:', err);
     }
   }
@@ -94,12 +93,30 @@
         
         URL.revokeObjectURL(url);
       } else {
-        error = response.error || 'Failed to export data';
+        error = response.error || chrome.i18n.getMessage('errorOccurred');
       }
     } catch (err) {
-      error = 'Failed to export data';
+      error = chrome.i18n.getMessage('errorOccurred');
       console.error('Failed to export data:', err);
     }
+  }
+
+  // Handle language change
+  async function handleLanguageChange(event: Event): Promise<void> {
+    const target = event.target as HTMLSelectElement;
+    await changeLanguage(target.value as SupportedLanguage);
+  }
+
+  // Reactive message function that updates when currentLanguage changes
+  $: getReactiveMessage = (key: string, substitutions?: string | string[]) => {
+    // This will re-run when $currentLanguage changes
+    $currentLanguage; // Just to make it reactive
+    return getMessage(key, substitutions);
+  }
+
+  $: getReactiveMessageWithCount = (key: string, count: number) => {
+    $currentLanguage; // Just to make it reactive
+    return getMessageWithCount(key, count);
   }
 
   // Import data
@@ -125,12 +142,12 @@
           if (productsResponse.success) {
             products = productsResponse.data;
           }
-          alert(`${response.count}個の商品をインポートしました`);
+          alert(chrome.i18n.getMessage('productsImported', [response.count.toString()]));
         } else {
-          error = response.error || 'Failed to import data';
+          error = response.error || chrome.i18n.getMessage('errorOccurred');
         }
       } catch (err) {
-        error = 'Failed to import data';
+        error = chrome.i18n.getMessage('errorOccurred');
         console.error('Failed to import data:', err);
       }
     };
@@ -146,10 +163,10 @@
       <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      <h1 class="text-lg font-semibold">価格トラッカー</h1>
+      <h1 class="text-lg font-semibold">{getReactiveMessage('priceTracker')}</h1>
     </div>
     <div class="text-sm opacity-90">
-      {trackedCount}個の商品
+      {getReactiveMessageWithCount('productCount', trackedCount)}
     </div>
   </header>
 
@@ -159,13 +176,13 @@
       class="flex-1 py-3 px-4 text-sm font-medium {activeTab === 'products' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-700'}"
       on:click={() => activeTab = 'products'}
     >
-      商品一覧
+      {getReactiveMessage('productsTab')}
     </button>
     <button 
       class="flex-1 py-3 px-4 text-sm font-medium {activeTab === 'settings' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-700'}"
       on:click={() => activeTab = 'settings'}
     >
-      設定
+      {getReactiveMessage('settingsTab')}
     </button>
   </nav>
 
@@ -177,7 +194,7 @@
       </div>
     {:else if error}
       <div class="p-4 bg-red-50 border-l-4 border-red-400 text-red-700">
-        <p class="font-medium">エラーが発生しました</p>
+        <p class="font-medium">{getReactiveMessage('errorOccurred')}</p>
         <p class="text-sm">{error}</p>
       </div>
     {:else if activeTab === 'products'}
@@ -187,8 +204,8 @@
           <svg class="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2m-2 0H8m8 0V9a2 2 0 00-2-2H8a2 2 0 00-2 2v4.01"/>
           </svg>
-          <p class="text-center mb-2">まだ商品を追跡していません</p>
-          <p class="text-sm text-center">楽天の商品ページで「価格を追跡」ボタンを押してください</p>
+          <p class="text-center mb-2">{getReactiveMessage('noProductsTracked')}</p>
+          <p class="text-sm text-center">{getReactiveMessage('trackingInstructions')}</p>
         </div>
       {:else}
         <div class="overflow-y-auto h-full">
@@ -200,13 +217,13 @@
                     class="font-medium text-gray-900 text-sm line-clamp-2 cursor-pointer hover:text-blue-600 transition-colors text-left w-full"
                     on:click={() => openProduct(product.url)}
                     title={product.title}
-                    aria-label="商品ページを開く: {product.title}"
+                    aria-label="{getReactiveMessage('openProductPage')}: {product.title}"
                   >
                     {product.title}
                   </button>
                   <div class="mt-1 flex items-center gap-4">
                     <span class="text-lg font-bold text-gray-900">
-                      {formatPrice(product.price)}
+                      {formatPrice(product.price, $currentLanguage)}
                     </span>
                     {#if product.availability}
                       <span class="text-xs px-2 py-1 rounded-full {
@@ -215,22 +232,19 @@
                         product.availability === 'backorder' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'
                       }">
-                        {product.availability === 'available' ? '在庫あり' :
-                         product.availability === 'out_of_stock' ? '在庫切れ' :
-                         product.availability === 'backorder' ? 'お取り寄せ' :
-                         '不明'}
+                        {getAvailabilityMessage(product.availability)}
                       </span>
                     {/if}
                   </div>
                   <p class="text-xs text-gray-500 mt-1">
-                    追跡開始: {formatDate(product.createdAt)}
+                    {getReactiveMessage('trackingStartedFrom')} {formatDate(product.createdAt, $currentLanguage)}
                   </p>
                 </div>
                 <div class="flex flex-col gap-1">
                   <button
                     class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                     on:click={() => openProduct(product.url)}
-                    aria-label="商品ページを開く"
+                    aria-label="{getReactiveMessage('openProductPage')}"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -239,7 +253,7 @@
                   <button
                     class="p-1 text-gray-400 hover:text-red-600 transition-colors"
                     on:click={() => deleteProduct(product.id)}
-                    aria-label="追跡を停止"
+                    aria-label="{getReactiveMessage('stopTracking')}"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -255,31 +269,44 @@
       <!-- Settings Tab -->
       <div class="p-4 space-y-4">
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 class="font-medium text-blue-900 mb-2">使用方法</h3>
+          <h3 class="font-medium text-blue-900 mb-2">{getReactiveMessage('usage')}</h3>
           <p class="text-sm text-blue-800">
-            楽天の商品ページで「価格を追跡」ボタンを押すと、その商品の価格を毎日記録します。価格の履歴はここで確認できます。
+            {getReactiveMessage('usageDescription')}
           </p>
         </div>
         
         <div class="border border-gray-200 rounded-lg p-4">
-          <h3 class="font-medium text-gray-900 mb-3">データ管理</h3>
+          <h3 class="font-medium text-gray-900 mb-3">{getReactiveMessage('dataManagement')}</h3>
           <div class="space-y-2">
             <button 
               class="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               on:click={exportData}
             >
-              データをエクスポート
+              {getReactiveMessage('exportData')}
             </button>
             <button 
               class="w-full px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
               on:click={importData}
             >
-              データをインポート
+              {getReactiveMessage('importData')}
             </button>
           </div>
           <p class="text-xs text-gray-500 mt-2">
-            追跡中の商品データと価格履歴を保存・復元できます
+            {getReactiveMessage('dataManagementDescription')}
           </p>
+        </div>
+
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h3 class="font-medium text-gray-900 mb-3">{getReactiveMessage('language')}</h3>
+          <select 
+            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            bind:value={$currentLanguage}
+            on:change={handleLanguageChange}
+          >
+            {#each Object.entries(SUPPORTED_LANGUAGES) as [code, messageKey]}
+              <option value={code}>{getReactiveMessage(messageKey)}</option>
+            {/each}
+          </select>
         </div>
 
         <div class="text-xs text-gray-500 text-center pt-4">

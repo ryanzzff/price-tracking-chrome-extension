@@ -8,8 +8,30 @@ export interface ExtractedProductData extends ProductData {
 export class RakutenProductExtractor {
   public productData: ExtractedProductData | null = null;
   public trackingEnabled = true;
+  private currentLanguage: string = 'ja';
 
-  constructor() {}
+  constructor() {
+    this.initializeLanguage();
+  }
+
+  private async initializeLanguage(): Promise<void> {
+    try {
+      const result = await chrome.storage.sync.get('selectedLanguage');
+      this.currentLanguage = result.selectedLanguage || 'ja';
+    } catch (error) {
+      console.warn('Failed to load language preference, using Japanese:', error);
+      this.currentLanguage = 'ja';
+    }
+  }
+
+  private getMessage(key: string): string {
+    try {
+      return chrome.i18n.getMessage(key) || key;
+    } catch (error) {
+      console.warn(`Failed to get message for key "${key}":`, error);
+      return key;
+    }
+  }
 
   async init(): Promise<void> {
     console.log('🔧 RakutenProductExtractor: Initializing...');
@@ -176,7 +198,7 @@ export class RakutenProductExtractor {
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="flex-shrink-0">
         <path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
       </svg>
-      <span class="rpt-button-text">価格を追跡</span>
+      <span class="rpt-button-text">${this.getMessage('trackPrice')}</span>
     `;
     
     // Create status indicator
@@ -205,11 +227,11 @@ export class RakutenProductExtractor {
 
       if (response.success) {
         this.updateButtonState('tracking');
-        this.showStatus('商品の追跡を開始しました', 'success');
+        this.showStatus(this.getMessage('trackingStarted'), 'success');
       }
     } catch (error) {
       console.error('Failed to track product:', error);
-      this.showStatus('エラーが発生しました', 'error');
+      this.showStatus(this.getMessage('errorOccurred'), 'error');
     }
   }
 
@@ -221,7 +243,7 @@ export class RakutenProductExtractor {
         button.className = button.className.replace('bg-blue-500 hover:bg-blue-600', 'bg-green-500 hover:bg-green-600');
         const textElement = button.querySelector('.rpt-button-text');
         if (textElement) {
-          textElement.textContent = '追跡中';
+          textElement.textContent = this.getMessage('tracking');
         }
       }
     }

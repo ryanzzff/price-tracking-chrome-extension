@@ -1,0 +1,138 @@
+{
+  "extensionName": {
+    "message": "Rakuten Price Tracker",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Track product prices on item.rakuten.co.jp with beautiful charts",
+    "description": "Extension description"
+  },
+  "priceTracker": {
+    "message": "Price Tracker",
+    "description": "Price tracker title"
+  },
+  "productCount": {
+    "message": "$count$ products",
+    "description": "Number of tracked products",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "productsTab": {
+    "message": "Products",
+    "description": "Products tab label"
+  },
+  "settingsTab": {
+    "message": "Settings",
+    "description": "Settings tab label"
+  },
+  "loading": {
+    "message": "Loading...",
+    "description": "Loading message"
+  },
+  "errorOccurred": {
+    "message": "An error occurred",
+    "description": "Error occurred message"
+  },
+  "noProductsTracked": {
+    "message": "No products are being tracked yet",
+    "description": "No products tracked message"
+  },
+  "trackingInstructions": {
+    "message": "Click the \"Track Price\" button on Rakuten product pages",
+    "description": "Instructions for tracking products"
+  },
+  "trackPrice": {
+    "message": "Track Price",
+    "description": "Track price button"
+  },
+  "tracking": {
+    "message": "Tracking",
+    "description": "Tracking status"
+  },
+  "openProductPage": {
+    "message": "Open product page",
+    "description": "Open product page"
+  },
+  "stopTracking": {
+    "message": "Stop tracking",
+    "description": "Stop tracking"
+  },
+  "trackingStarted": {
+    "message": "Started tracking product",
+    "description": "Tracking started message"
+  },
+  "trackingStartedFrom": {
+    "message": "Tracking started:",
+    "description": "Tracking started from date"
+  },
+  "available": {
+    "message": "In Stock",
+    "description": "Product available"
+  },
+  "outOfStock": {
+    "message": "Out of Stock",
+    "description": "Product out of stock"
+  },
+  "backorder": {
+    "message": "Backorder",
+    "description": "Product on backorder"
+  },
+  "unknown": {
+    "message": "Unknown",
+    "description": "Unknown status"
+  },
+  "usage": {
+    "message": "How to Use",
+    "description": "Usage instructions header"
+  },
+  "usageDescription": {
+    "message": "Click the \"Track Price\" button on Rakuten product pages to record their prices daily. You can view price history here.",
+    "description": "Usage instructions text"
+  },
+  "dataManagement": {
+    "message": "Data Management",
+    "description": "Data management header"
+  },
+  "exportData": {
+    "message": "Export Data",
+    "description": "Export data button"
+  },
+  "importData": {
+    "message": "Import Data",
+    "description": "Import data button"
+  },
+  "dataManagementDescription": {
+    "message": "Save and restore tracked product data and price history",
+    "description": "Data management description"
+  },
+  "productsImported": {
+    "message": "Imported $count$ products",
+    "description": "Products imported message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "language": {
+    "message": "Language",
+    "description": "Language setting"
+  },
+  "japanese": {
+    "message": "日本語",
+    "description": "Japanese language option"
+  },
+  "traditionalChinese": {
+    "message": "繁體中文",
+    "description": "Traditional Chinese language option"
+  },
+  "english": {
+    "message": "English",
+    "description": "English language option"
+  }
+}

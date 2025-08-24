@@ -1,0 +1,138 @@
+{
+  "extensionName": {
+    "message": "樂天價格追蹤器",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "在 item.rakuten.co.jp 追蹤商品價格，並以美麗圖表顯示",
+    "description": "Extension description"
+  },
+  "priceTracker": {
+    "message": "價格追蹤器",
+    "description": "Price tracker title"
+  },
+  "productCount": {
+    "message": "$count$個商品",
+    "description": "Number of tracked products",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "productsTab": {
+    "message": "商品列表",
+    "description": "Products tab label"
+  },
+  "settingsTab": {
+    "message": "設定",
+    "description": "Settings tab label"
+  },
+  "loading": {
+    "message": "載入中...",
+    "description": "Loading message"
+  },
+  "errorOccurred": {
+    "message": "發生錯誤",
+    "description": "Error occurred message"
+  },
+  "noProductsTracked": {
+    "message": "尚未追蹤任何商品",
+    "description": "No products tracked message"
+  },
+  "trackingInstructions": {
+    "message": "在樂天商品頁面點擊「追蹤價格」按鈕",
+    "description": "Instructions for tracking products"
+  },
+  "trackPrice": {
+    "message": "追蹤價格",
+    "description": "Track price button"
+  },
+  "tracking": {
+    "message": "追蹤中",
+    "description": "Tracking status"
+  },
+  "openProductPage": {
+    "message": "開啟商品頁面",
+    "description": "Open product page"
+  },
+  "stopTracking": {
+    "message": "停止追蹤",
+    "description": "Stop tracking"
+  },
+  "trackingStarted": {
+    "message": "已開始追蹤商品",
+    "description": "Tracking started message"
+  },
+  "trackingStartedFrom": {
+    "message": "追蹤開始：",
+    "description": "Tracking started from date"
+  },
+  "available": {
+    "message": "有庫存",
+    "description": "Product available"
+  },
+  "outOfStock": {
+    "message": "缺貨",
+    "description": "Product out of stock"
+  },
+  "backorder": {
+    "message": "預購",
+    "description": "Product on backorder"
+  },
+  "unknown": {
+    "message": "未知",
+    "description": "Unknown status"
+  },
+  "usage": {
+    "message": "使用方法",
+    "description": "Usage instructions header"
+  },
+  "usageDescription": {
+    "message": "在樂天商品頁面點擊「追蹤價格」按鈕，系統會每日記錄該商品的價格。您可以在這裡查看價格歷史記錄。",
+    "description": "Usage instructions text"
+  },
+  "dataManagement": {
+    "message": "資料管理",
+    "description": "Data management header"
+  },
+  "exportData": {
+    "message": "匯出資料",
+    "description": "Export data button"
+  },
+  "importData": {
+    "message": "匯入資料",
+    "description": "Import data button"
+  },
+  "dataManagementDescription": {
+    "message": "可以保存和復原追蹤中的商品資料與價格歷史記錄",
+    "description": "Data management description"
+  },
+  "productsImported": {
+    "message": "已匯入 $count$ 個商品",
+    "description": "Products imported message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "language": {
+    "message": "語言",
+    "description": "Language setting"
+  },
+  "japanese": {
+    "message": "日本語",
+    "description": "Japanese language option"
+  },
+  "traditionalChinese": {
+    "message": "繁體中文",
+    "description": "Traditional Chinese language option"
+  },
+  "english": {
+    "message": "English",
+    "description": "English language option"
+  }
+}

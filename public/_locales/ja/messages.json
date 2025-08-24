@@ -1,0 +1,138 @@
+{
+  "extensionName": {
+    "message": "楽天価格トラッカー",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "item.rakuten.co.jp で商品価格を追跡し、美しいチャートで表示します",
+    "description": "Extension description"
+  },
+  "priceTracker": {
+    "message": "価格トラッカー",
+    "description": "Price tracker title"
+  },
+  "productCount": {
+    "message": "$count$個の商品",
+    "description": "Number of tracked products",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "productsTab": {
+    "message": "商品一覧",
+    "description": "Products tab label"
+  },
+  "settingsTab": {
+    "message": "設定",
+    "description": "Settings tab label"
+  },
+  "loading": {
+    "message": "読み込み中...",
+    "description": "Loading message"
+  },
+  "errorOccurred": {
+    "message": "エラーが発生しました",
+    "description": "Error occurred message"
+  },
+  "noProductsTracked": {
+    "message": "まだ商品を追跡していません",
+    "description": "No products tracked message"
+  },
+  "trackingInstructions": {
+    "message": "楽天の商品ページで「価格を追跡」ボタンを押してください",
+    "description": "Instructions for tracking products"
+  },
+  "trackPrice": {
+    "message": "価格を追跡",
+    "description": "Track price button"
+  },
+  "tracking": {
+    "message": "追跡中",
+    "description": "Tracking status"
+  },
+  "openProductPage": {
+    "message": "商品ページを開く",
+    "description": "Open product page"
+  },
+  "stopTracking": {
+    "message": "追跡を停止",
+    "description": "Stop tracking"
+  },
+  "trackingStarted": {
+    "message": "商品の追跡を開始しました",
+    "description": "Tracking started message"
+  },
+  "trackingStartedFrom": {
+    "message": "追跡開始:",
+    "description": "Tracking started from date"
+  },
+  "available": {
+    "message": "在庫あり",
+    "description": "Product available"
+  },
+  "outOfStock": {
+    "message": "在庫切れ",
+    "description": "Product out of stock"
+  },
+  "backorder": {
+    "message": "お取り寄せ",
+    "description": "Product on backorder"
+  },
+  "unknown": {
+    "message": "不明",
+    "description": "Unknown status"
+  },
+  "usage": {
+    "message": "使用方法",
+    "description": "Usage instructions header"
+  },
+  "usageDescription": {
+    "message": "楽天の商品ページで「価格を追跡」ボタンを押すと、その商品の価格を毎日記録します。価格の履歴はここで確認できます。",
+    "description": "Usage instructions text"
+  },
+  "dataManagement": {
+    "message": "データ管理",
+    "description": "Data management header"
+  },
+  "exportData": {
+    "message": "データをエクスポート",
+    "description": "Export data button"
+  },
+  "importData": {
+    "message": "データをインポート",
+    "description": "Import data button"
+  },
+  "dataManagementDescription": {
+    "message": "追跡中の商品データと価格履歴を保存・復元できます",
+    "description": "Data management description"
+  },
+  "productsImported": {
+    "message": "$count$個の商品をインポートしました",
+    "description": "Products imported message",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "language": {
+    "message": "言語",
+    "description": "Language setting"
+  },
+  "japanese": {
+    "message": "日本語",
+    "description": "Japanese language option"
+  },
+  "traditionalChinese": {
+    "message": "繁體中文",
+    "description": "Traditional Chinese language option"
+  },
+  "english": {
+    "message": "English",
+    "description": "English language option"
+  }
+}
