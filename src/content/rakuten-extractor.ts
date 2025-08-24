@@ -8,7 +8,6 @@ export interface ExtractedProductData extends ProductData {
 export class RakutenProductExtractor {
   public productData: ExtractedProductData | null = null;
   public trackingEnabled = true;
-  private currentLanguage: string = 'ja';
 
   constructor() {
     this.initializeLanguage();
@@ -16,11 +15,9 @@ export class RakutenProductExtractor {
 
   private async initializeLanguage(): Promise<void> {
     try {
-      const result = await chrome.storage.sync.get('selectedLanguage');
-      this.currentLanguage = result.selectedLanguage || 'ja';
+      await chrome.storage.sync.get('selectedLanguage');
     } catch (error) {
       console.warn('Failed to load language preference, using Japanese:', error);
-      this.currentLanguage = 'ja';
     }
   }
 
@@ -294,8 +291,8 @@ export class RakutenProductExtractor {
     // Apply container styles inline
     Object.assign(trackButton.style, {
       position: 'fixed',
-      bottom: '30px',
-      right: '30px',
+      bottom: '10px',
+      left: '20px',
       zIndex: '999999',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       fontSize: '14px',
@@ -325,7 +322,7 @@ export class RakutenProductExtractor {
     button.dataset.trackingState = 'idle';
     
     // Store validation state as data attribute for hover effects
-    button.dataset.hasValidData = hasValidData.toString();
+    button.dataset.hasValidData = hasValidData?.toString() || 'false';
     button.dataset.defaultColor = buttonColor;
     
     // Apply button styles inline (now that buttonColor is defined)
@@ -333,7 +330,7 @@ export class RakutenProductExtractor {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '16px 24px',
+      padding: '8px 12px',
       background: buttonColor,
       color: 'white',
       border: 'none',
