@@ -242,7 +242,7 @@
                     <span class="text-lg font-bold text-gray-900">
                       {formatPrice(product.price, $currentLanguage)}
                     </span>
-                    {#if product.availability}
+                    {#if product.availability && product.availability !== 'unknown'}
                       <span class="text-xs px-2 py-1 rounded-full {
                         product.availability === 'available' ? 'bg-green-100 text-green-800' :
                         product.availability === 'out_of_stock' ? 'bg-red-100 text-red-800' :
@@ -253,6 +253,11 @@
                       </span>
                     {/if}
                   </div>
+                  {#if product.seller}
+                    <div class="mt-1">
+                      <span class="text-xs text-blue-600 font-medium">{product.seller}</span>
+                    </div>
+                  {/if}
                   <p class="text-xs text-gray-500 mt-1">
                     {getReactiveMessage('trackingStartedFrom')} {formatDate(product.createdAt, $currentLanguage)}
                   </p>

@@ -217,26 +217,78 @@ export class RakutenProductExtractor {
 
   getAvailability(): string {
     const availabilityPatterns = {
-      available: ['在庫あり', '在庫有り', '即納', '当日発送'],
-      outOfStock: ['在庫なし', '在庫切れ', '売り切れ', '完売'],
-      backorder: ['取り寄せ', '予約', 'お取り寄せ']
+      available: ['在庫あり', '在庫有り', '即納', '当日発送', 'お届け'],
+      outOfStock: ['在庫なし', '在庫切れ', '売り切れ', '完売', '販売終了', '売り切れ中', '在庫切れ中'],
+      backorder: ['取り寄せ', '予約', 'お取り寄せ', '入荷待ち']
     };
 
-    const stockElements = document.querySelectorAll('.stock_status, .availability, .item-stock');
+    // FIRST PRIORITY: Check if purchase buttons are present and enabled
+    // This is the most reliable indicator of availability
+    const addToCartButton = document.querySelector('[aria-label="かごに追加"]:not([disabled])');
+    const purchaseButton = document.querySelector('[aria-label="購入手続きへ"]:not([disabled])');
     
-    for (const element of stockElements) {
-      const text = (element.textContent || '').toLowerCase();
-      
-      if (availabilityPatterns.available.some(pattern => text.includes(pattern))) {
-        return 'available';
-      }
-      if (availabilityPatterns.outOfStock.some(pattern => text.includes(pattern))) {
-        return 'out_of_stock';
-      }
-      if (availabilityPatterns.backorder.some(pattern => text.includes(pattern))) {
-        return 'backorder';
+    if (addToCartButton && purchaseButton) {
+      console.log('📦 Found enabled purchase buttons, product is available for purchase');
+      return 'available';
+    }
+
+    // SECOND PRIORITY: Check for delivery information as a positive availability indicator
+    const deliveryInfo = document.querySelector('.normal-reserve-deliveryDate');
+    if (deliveryInfo && deliveryInfo.textContent?.includes('お届け')) {
+      console.log('📦 Found delivery information, assuming available');
+      return 'available';
+    }
+
+    // THIRD PRIORITY: Check quantity selector (if present, usually means available)
+    const quantitySelector = document.querySelector('.normal-reserve-quantity input[type="tel"]');
+    if (quantitySelector && !quantitySelector.hasAttribute('disabled')) {
+      console.log('📦 Found enabled quantity selector, assuming available');
+      return 'available';
+    }
+
+    // FOURTH PRIORITY: Check text-based availability indicators
+    const availabilitySelectors = [
+      '.stock_status',
+      '.availability', 
+      '.item-stock',
+      '.normal-reserve-inventory', // Inventory area
+      '.text-display--2xC98' // General text displays (but be more selective)
+    ];
+
+    // Check for explicit stock status messages
+    for (const selector of availabilitySelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const text = (element.textContent || '').toLowerCase();
+        
+        // Check for definitive out of stock patterns
+        if (availabilityPatterns.outOfStock.some(pattern => text.includes(pattern))) {
+          console.log(`📦 Found out of stock indicator: "${text.substring(0, 50)}" in ${selector}`);
+          return 'out_of_stock';
+        }
+        
+        if (availabilityPatterns.backorder.some(pattern => text.includes(pattern))) {
+          console.log(`📦 Found backorder indicator: "${text.substring(0, 50)}" in ${selector}`);
+          return 'backorder';
+        }
+        
+        if (availabilityPatterns.available.some(pattern => text.includes(pattern))) {
+          console.log(`📦 Found available indicator: "${text.substring(0, 50)}" in ${selector}`);
+          return 'available';
+        }
       }
     }
+
+    // Check for disabled purchase buttons (strong indicator of unavailability)
+    const disabledAddToCart = document.querySelector('[aria-label="かごに追加"][disabled]');
+    const disabledPurchase = document.querySelector('[aria-label="購入手続きへ"][disabled]');
+    
+    if (disabledAddToCart || disabledPurchase) {
+      console.log('📦 Found disabled purchase buttons, likely out of stock');
+      return 'out_of_stock';
+    }
+    
+    console.log('📦 No clear availability indicators found, returning unknown');
     return 'unknown';
   }
 
@@ -250,6 +302,49 @@ export class RakutenProductExtractor {
     return match ? match[1] : null;
   }
 
+  getSeller(): string | null {
+    // Try to extract shop/seller name from various elements
+    const selectors = [
+      '.shop_name',
+      '.seller_name',
+      '.shop-name', 
+      '.store-name',
+      '[data-testid="shop-name"]',
+      '.shopName',
+      '.storeName',
+      'meta[property="shop:name"]',
+      'meta[name="shop"]',
+      '.breadcrumb a[href*="/shop/"]' // Breadcrumb link to shop
+    ];
+
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        // Handle meta tags
+        if (element.tagName === 'META') {
+          const content = element.getAttribute('content');
+          if (content?.trim()) {
+            console.log(`✅ Found seller name with meta selector "${selector}":`, content.trim());
+            return content.trim();
+          }
+        } else if (element.textContent?.trim()) {
+          console.log(`✅ Found seller name with selector "${selector}":`, element.textContent.trim());
+          return element.textContent.trim();
+        }
+      }
+    }
+
+    // Fallback: Extract shop name from URL (shopId)
+    const shopId = this.extractShopId();
+    if (shopId) {
+      console.log('📍 Using shopId as fallback seller name:', shopId);
+      return shopId;
+    }
+    
+    console.log('❌ No seller name found');
+    return null;
+  }
+
   extractProductData(): ExtractedProductData {
     console.log('Extracting product data from URL:', window.location.href);
     
@@ -257,8 +352,9 @@ export class RakutenProductExtractor {
     const price = this.getProductPrice();
     const shopId = this.extractShopId();
     const itemCode = this.extractItemCode();
+    const seller = this.getSeller();
     
-    console.log('Extracted data:', { title, price, shopId, itemCode });
+    console.log('Extracted data:', { title, price, shopId, itemCode, seller });
     
     const productInfo: ExtractedProductData = {
       url: window.location.href,
@@ -266,6 +362,7 @@ export class RakutenProductExtractor {
       itemCode: itemCode || '',
       title: title || '',
       price: price || 0,
+      seller: seller || undefined,
       availability: this.getAvailability(),
       timestamp: Date.now()
     };
