@@ -37,10 +37,12 @@ export class RakutenProductExtractor {
     console.log('🔧 RakutenProductExtractor: Initializing...', new Date().toISOString());
     
     // Check if tracking is enabled
-    const settings = await chrome.storage.sync.get(['trackingEnabled', 'debugMode']);
+    const settings = await chrome.storage.sync.get(['trackingEnabled', 'debugMode', 'autoTrack']);
     this.trackingEnabled = settings.trackingEnabled !== false;
     const debugMode = settings.debugMode || false;
+    const autoTrack = settings.autoTrack !== undefined ? settings.autoTrack : true;
     console.log('⚙️ Tracking enabled:', this.trackingEnabled);
+    console.log('🤖 Auto-track enabled:', autoTrack);
     console.log('🐛 Debug mode:', debugMode);
     
     // Try multiple detection methods
@@ -68,6 +70,12 @@ export class RakutenProductExtractor {
       console.log('✅ Product page detected or debug mode active, proceeding with extraction');
       this.extractProductData();
       this.injectTrackingUI();
+      
+      // Auto-track if enabled
+      if (autoTrack && !debugMode && this.productData) {
+        console.log('🤖 Auto-tracking enabled, automatically tracking product...');
+        await this.autoTrackProduct();
+      }
       
       // Passively check and store today's price if needed
       if (!debugMode) {
@@ -286,41 +294,78 @@ export class RakutenProductExtractor {
     // Apply container styles inline
     Object.assign(trackButton.style, {
       position: 'fixed',
-      bottom: '20px',
-      right: '20px',
+      bottom: '30px',
+      right: '30px',
       zIndex: '999999',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      fontSize: '14px'
+      fontSize: '14px',
+      pointerEvents: 'auto'
     });
     
+    // Get product info for display FIRST
+    const productTitle = this.productData?.title || 'Product not detected';
+    const productPrice = this.productData?.price || 0;
+    const hasValidData = this.productData && this.productData.title && this.productData.price > 0;
+    const formattedPrice = productPrice ? `¥${productPrice.toLocaleString()}` : 'Price not detected';
+    const truncatedTitle = productTitle.length > 30 ? productTitle.substring(0, 30) + '...' : productTitle;
+    
+    // Set different button color based on detection success
+    const buttonColor = hasValidData ? '#3b82f6' : '#ef4444'; // Blue for success, red for failure
+    
+    // Choose icon and text based on validation
+    const iconPath = hasValidData 
+      ? '<path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>'
+      : '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>';
+    
+    const buttonText = hasValidData ? this.getMessage('trackPrice') : '⚠️ Detection Issue';
+
     // Create main button element
     const button = document.createElement('button');
     button.dataset.rptButton = 'track';
+    button.dataset.trackingState = 'idle';
     
-    // Apply button styles inline
+    // Store validation state as data attribute for hover effects
+    button.dataset.hasValidData = hasValidData.toString();
+    button.dataset.defaultColor = buttonColor;
+    
+    // Apply button styles inline (now that buttonColor is defined)
     Object.assign(button.style, {
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      padding: '12px 20px',
-      background: '#3b82f6',
+      gap: '12px',
+      padding: '16px 24px',
+      background: buttonColor,
       color: 'white',
       border: 'none',
-      borderRadius: '25px',
+      borderRadius: '16px',
       cursor: 'pointer',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       transition: 'all 0.3s ease',
       fontSize: '14px',
       fontWeight: '500',
-      textDecoration: 'none'
+      textDecoration: 'none',
+      minWidth: '280px',
+      maxWidth: '350px'
     });
-    
-    // Add SVG icon and text
+
+    // Add SVG icon and detailed product info
     button.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
-        <path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-      </svg>
-      <span class="rpt-button-text">${this.getMessage('trackPrice')}</span>
+      <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;">
+          ${iconPath}
+        </svg>
+        <div style="display: flex; flex-direction: column; align-items: flex-start; flex: 1; min-width: 0;">
+          <div class="rpt-button-text" style="font-weight: 600; font-size: 14px; margin-bottom: 2px;">
+            ${buttonText}
+          </div>
+          <div class="rpt-product-title" style="font-weight: 400; font-size: 12px; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;" title="${productTitle}">
+            ${truncatedTitle}
+          </div>
+          <div class="rpt-product-price" style="font-weight: 600; font-size: 13px; color: #fef3c7; margin-top: 1px;">
+            ${formattedPrice}
+          </div>
+        </div>
+      </div>
     `;
     
     // Create status indicator
@@ -344,24 +389,37 @@ export class RakutenProductExtractor {
     
     // Add hover effects
     button.addEventListener('mouseenter', () => {
-      if (!button.classList.contains('tracking')) {
-        button.style.background = '#2563eb';
+      const trackingState = button.dataset.trackingState || 'idle';
+      if (trackingState === 'idle') {
+        const isValid = button.dataset.hasValidData === 'true';
+        const hoverColor = isValid ? '#2563eb' : '#dc2626';
+        button.style.background = hoverColor;
         button.style.transform = 'translateY(-2px)';
         button.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-      } else {
+      } else if (trackingState === 'tracking') {
         button.style.background = '#059669';
+        button.style.transform = 'translateY(-2px)';
+        button.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+      } else if (trackingState === 'auto-tracked') {
+        button.style.background = '#7c3aed';
         button.style.transform = 'translateY(-2px)';
         button.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
       }
     });
     
     button.addEventListener('mouseleave', () => {
-      if (!button.classList.contains('tracking')) {
-        button.style.background = '#3b82f6';
+      const trackingState = button.dataset.trackingState || 'idle';
+      if (trackingState === 'idle') {
+        const defaultColor = button.dataset.defaultColor || '#3b82f6';
+        button.style.background = defaultColor;
         button.style.transform = 'translateY(0)';
         button.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-      } else {
+      } else if (trackingState === 'tracking') {
         button.style.background = '#10b981';
+        button.style.transform = 'translateY(0)';
+        button.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+      } else if (trackingState === 'auto-tracked') {
+        button.style.background = '#8b5cf6';
         button.style.transform = 'translateY(0)';
         button.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
       }
@@ -376,7 +434,12 @@ export class RakutenProductExtractor {
 
     // Add click event listener
     button.addEventListener('click', () => {
-      this.trackProduct();
+      const isValid = button.dataset.hasValidData === 'true';
+      if (isValid) {
+        this.trackProduct();
+      } else {
+        this.showStatus('Cannot track: Product data not detected', 'error');
+      }
     });
   }
 
@@ -399,16 +462,62 @@ export class RakutenProductExtractor {
     }
   }
 
+  async autoTrackProduct(): Promise<void> {
+    if (!this.productData) return;
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'TRACK_PRODUCT',
+        data: this.productData
+      });
+
+      if (response.success) {
+        console.log('🤖 Product auto-tracked successfully:', this.productData.title);
+        this.updateButtonState('auto-tracked');
+        this.showStatus('Auto-tracked!', 'success');
+      }
+    } catch (error) {
+      console.error('Failed to auto-track product:', error);
+      this.showStatus('Auto-track failed', 'error');
+    }
+  }
+
   updateButtonState(state: string): void {
     const button = document.querySelector('#rakuten-price-tracker-fab button') as HTMLElement;
     if (button) {
       if (state === 'tracking') {
-        // Update button styling for tracking state
+        // Update button styling for manual tracking state
         button.classList.add('tracking');
+        button.dataset.trackingState = 'tracking';
         button.style.background = '#10b981';
         const textElement = button.querySelector('.rpt-button-text');
         if (textElement) {
-          textElement.textContent = this.getMessage('tracking');
+          textElement.textContent = '✓ ' + this.getMessage('tracking');
+        }
+        
+        // Update icon to checkmark
+        const existingIcon = button.querySelector('svg');
+        if (existingIcon) {
+          existingIcon.innerHTML = `
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+          `;
+        }
+      } else if (state === 'auto-tracked') {
+        // Update button styling for auto-tracked state
+        button.classList.add('tracking');
+        button.dataset.trackingState = 'auto-tracked';
+        button.style.background = '#8b5cf6'; // Purple color for auto-tracked
+        const textElement = button.querySelector('.rpt-button-text');
+        if (textElement) {
+          textElement.textContent = '⚡ Auto-tracked';
+        }
+        
+        // Update icon to lightning bolt
+        const existingIcon = button.querySelector('svg');
+        if (existingIcon) {
+          existingIcon.innerHTML = `
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+          `;
         }
       }
     }

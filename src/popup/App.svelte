@@ -19,6 +19,7 @@
   let loading = true;
   let error = '';
   let activeTab: 'products' | 'settings' = 'products';
+  let autoTrack = true;
 
   // Load tracked products on mount
   onMount(async () => {
@@ -26,6 +27,10 @@
     await initializeI18n();
     
     try {
+      // Load auto-track setting (default to true)
+      const settingsResult = await chrome.storage.sync.get(['autoTrack']);
+      autoTrack = settingsResult.autoTrack !== undefined ? settingsResult.autoTrack : true;
+      
       console.log('Popup: Sending GET_PRODUCTS message');
       const response = await chrome.runtime.sendMessage({ action: 'GET_PRODUCTS' });
       console.log('Popup: Received response:', response);
@@ -105,6 +110,18 @@
   async function handleLanguageChange(event: Event): Promise<void> {
     const target = event.target as HTMLSelectElement;
     await changeLanguage(target.value as SupportedLanguage);
+  }
+
+  // Handle auto-track setting change
+  async function toggleAutoTrack(): Promise<void> {
+    try {
+      autoTrack = !autoTrack;
+      await chrome.storage.sync.set({ autoTrack });
+      console.log('Auto-track setting updated:', autoTrack);
+    } catch (err) {
+      console.error('Failed to update auto-track setting:', err);
+      autoTrack = !autoTrack; // Revert on error
+    }
   }
 
   // Reactive message function that updates when currentLanguage changes
@@ -267,7 +284,7 @@
       {/if}
     {:else}
       <!-- Settings Tab -->
-      <div class="p-4 space-y-4">
+      <div class="p-4 space-y-4 overflow-y-auto h-full">
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h3 class="font-medium text-blue-900 mb-2">{getReactiveMessage('usage')}</h3>
           <p class="text-sm text-blue-800">
@@ -294,6 +311,34 @@
           <p class="text-xs text-gray-500 mt-2">
             {getReactiveMessage('dataManagementDescription')}
           </p>
+        </div>
+
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h3 class="font-medium text-gray-900 mb-3">Auto-tracking</h3>
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <label for="autoTrack" class="text-sm font-medium text-gray-700">
+                Automatically track products
+              </label>
+              <p class="text-xs text-gray-500 mt-1">
+                Start tracking prices when you visit product pages
+              </p>
+            </div>
+            <button
+              id="autoTrack"
+              type="button"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {autoTrack ? 'bg-blue-600' : 'bg-gray-200'}"
+              role="switch"
+              aria-checked={autoTrack}
+              on:click={toggleAutoTrack}
+            >
+              <span class="sr-only">Enable auto-tracking</span>
+              <span
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {autoTrack ? 'translate-x-5' : 'translate-x-0'}"
+              ></span>
+            </button>
+          </div>
         </div>
 
         <div class="border border-gray-200 rounded-lg p-4">
